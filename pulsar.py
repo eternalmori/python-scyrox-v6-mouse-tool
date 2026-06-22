@@ -343,7 +343,7 @@ LOD_MM_MIN = 0x01
 LOD_MM_MAX = 0x02
 
 DPI_MODE_MIN = 0x00
-DPI_MODE_MAX = 0x03
+DPI_MODE_MAX = 0x07
 
 DPI_LOCK_MIN = 0x00  # 50
 DPI_LOCK_MAX = 0x15  # 1100
@@ -358,7 +358,7 @@ LED_BREATHE_SPEED_MIN = 0x01
 LED_BREATHE_SPEED_MAX = 0x05
 
 DPI_MODE_CT_MIN = 0x01
-DPI_MODE_CT_MAX = 0x04
+DPI_MODE_CT_MAX = 0x08
 
 DPI_MIN = 50
 DPI_MAX = 26000
@@ -387,6 +387,22 @@ ADDR_MODE3_DPI_INDEX1 = 0x18
 ADDR_MODE3_DPI_INDEX2 = 0x19
 ADDR_MODE3_DPI_INDEX3 = 0x1a
 ADDR_MODE3_DPI_CHECKSUM = 0x1b
+ADDR_MODE4_DPI_INDEX1 = 0x1c
+ADDR_MODE4_DPI_INDEX2 = 0x1d
+ADDR_MODE4_DPI_INDEX3 = 0x1e
+ADDR_MODE4_DPI_CHECKSUM = 0x1f
+ADDR_MODE5_DPI_INDEX1 = 0x20
+ADDR_MODE5_DPI_INDEX2 = 0x21
+ADDR_MODE5_DPI_INDEX3 = 0x22
+ADDR_MODE5_DPI_CHECKSUM = 0x23
+ADDR_MODE6_DPI_INDEX1 = 0x24
+ADDR_MODE6_DPI_INDEX2 = 0x25
+ADDR_MODE6_DPI_INDEX3 = 0x26
+ADDR_MODE6_DPI_CHECKSUM = 0x27
+ADDR_MODE7_DPI_INDEX1 = 0x28
+ADDR_MODE7_DPI_INDEX2 = 0x29
+ADDR_MODE7_DPI_INDEX3 = 0x2a
+ADDR_MODE7_DPI_CHECKSUM = 0x2b
 ADDR_MODE0_LED_COLOR_R = 0x2c
 ADDR_MODE0_LED_COLOR_G = 0x2d
 ADDR_MODE0_LED_COLOR_B = 0x2e
@@ -403,6 +419,22 @@ ADDR_MODE3_LED_COLOR_R = 0x38
 ADDR_MODE3_LED_COLOR_G = 0x39
 ADDR_MODE3_LED_COLOR_B = 0x3a
 ADDR_MODE3_LED_COLOR_CHECKSUM = 0x3b
+ADDR_MODE4_LED_COLOR_R = 0x3c
+ADDR_MODE4_LED_COLOR_G = 0x3d
+ADDR_MODE4_LED_COLOR_B = 0x3e
+ADDR_MODE4_LED_COLOR_CHECKSUM = 0x3f
+ADDR_MODE5_LED_COLOR_R = 0x40
+ADDR_MODE5_LED_COLOR_G = 0x41
+ADDR_MODE5_LED_COLOR_B = 0x42
+ADDR_MODE5_LED_COLOR_CHECKSUM = 0x43
+ADDR_MODE6_LED_COLOR_R = 0x44
+ADDR_MODE6_LED_COLOR_G = 0x45
+ADDR_MODE6_LED_COLOR_B = 0x46
+ADDR_MODE6_LED_COLOR_CHECKSUM = 0x47
+ADDR_MODE7_LED_COLOR_R = 0x48
+ADDR_MODE7_LED_COLOR_G = 0x49
+ADDR_MODE7_LED_COLOR_B = 0x4a
+ADDR_MODE7_LED_COLOR_CHECKSUM = 0x4b
 ADDR_LED_EFFECT = 0x4c
 ADDR_LED_EFFECT_CHECKSUM = 0x4d
 ADDR_LED_BRIGHTNESS = 0x4e
@@ -490,6 +522,8 @@ class Device:
     VENDOR_ID = 0x3554  # Pulsar
     WIRELESS_1KHZ_DEVICE_ID = 0xf508  # X2V2 Mini (1khz wireless dongle)
     WIRED_DEVICE_ID = 0xf507  # X2V2 Mini (wired)
+    SCYROX_V6_DEVICE_ID = 0xf5f6  # Scyrox V6/V8 (wired)
+    SCYROX_8K_DONGLE_DEVICE_ID = 0xf5f7  # Scyrox 8K wireless dongle
 
     INTERFACES = {
         0: {'endpoint': 0x81, 'length': 8},
@@ -503,12 +537,11 @@ class Device:
         self.length = info['length']
         self.endpoint = info['endpoint']
 
-        for device_id in (self.WIRELESS_1KHZ_DEVICE_ID, self.WIRED_DEVICE_ID):
+        for device_id in (self.WIRELESS_1KHZ_DEVICE_ID, self.WIRED_DEVICE_ID, self.SCYROX_V6_DEVICE_ID, self.SCYROX_8K_DONGLE_DEVICE_ID):
             self.device = usb.core.find(idVendor=self.VENDOR_ID, idProduct=device_id)
             if self.device is None:
                 continue
             else:
-                self.device.reset()
                 self.open_device(self.get_device(self.VENDOR_ID, device_id), 1)
                 break
         if self.device is None:
@@ -630,7 +663,10 @@ class PulsarX2V2Mini:
                 index05=length,
             )
             self.dev.write(payload)
-            resp = self.dev.read()
+            while True:
+                resp = self.dev.read()
+                if resp[1] == Command.MEM_GET:
+                    break
             assert resp[4] == current
             assert resp[5] == length
             for (k, v) in enumerate(resp[6:6+length], current):
@@ -942,6 +978,42 @@ ADDR_MODE = [
         ADDR_MODE3_LED_COLOR_G,
         ADDR_MODE3_LED_COLOR_B,
         ADDR_MODE3_LED_COLOR_CHECKSUM),
+    ModeAddresses(
+        ADDR_MODE4_DPI_INDEX1,
+        ADDR_MODE4_DPI_INDEX2,
+        ADDR_MODE4_DPI_INDEX3,
+        ADDR_MODE4_DPI_CHECKSUM,
+        ADDR_MODE4_LED_COLOR_R,
+        ADDR_MODE4_LED_COLOR_G,
+        ADDR_MODE4_LED_COLOR_B,
+        ADDR_MODE4_LED_COLOR_CHECKSUM),
+    ModeAddresses(
+        ADDR_MODE5_DPI_INDEX1,
+        ADDR_MODE5_DPI_INDEX2,
+        ADDR_MODE5_DPI_INDEX3,
+        ADDR_MODE5_DPI_CHECKSUM,
+        ADDR_MODE5_LED_COLOR_R,
+        ADDR_MODE5_LED_COLOR_G,
+        ADDR_MODE5_LED_COLOR_B,
+        ADDR_MODE5_LED_COLOR_CHECKSUM),
+    ModeAddresses(
+        ADDR_MODE6_DPI_INDEX1,
+        ADDR_MODE6_DPI_INDEX2,
+        ADDR_MODE6_DPI_INDEX3,
+        ADDR_MODE6_DPI_CHECKSUM,
+        ADDR_MODE6_LED_COLOR_R,
+        ADDR_MODE6_LED_COLOR_G,
+        ADDR_MODE6_LED_COLOR_B,
+        ADDR_MODE6_LED_COLOR_CHECKSUM),
+    ModeAddresses(
+        ADDR_MODE7_DPI_INDEX1,
+        ADDR_MODE7_DPI_INDEX2,
+        ADDR_MODE7_DPI_INDEX3,
+        ADDR_MODE7_DPI_CHECKSUM,
+        ADDR_MODE7_LED_COLOR_R,
+        ADDR_MODE7_LED_COLOR_G,
+        ADDR_MODE7_LED_COLOR_B,
+        ADDR_MODE7_LED_COLOR_CHECKSUM),
 ]
 
 
