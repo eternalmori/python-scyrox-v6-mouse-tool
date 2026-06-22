@@ -1,4 +1,5 @@
 # python-scyrox-v6-mouse-tool
+! This might break the support for Pulsar mice, I am not sure, since I only have a Scyrox v6 to test on, and I'm using it to simply read battery so I can pipe it into my taskbar, not much else.
 
 Fork of [python-pulsar-mouse-tool](https://github.com/andrewrabert/python-pulsar-mouse-tool) with extended hardware support.
 
